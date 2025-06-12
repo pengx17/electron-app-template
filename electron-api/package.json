@@ -1,0 +1,10 @@
+{
+  "name": "video-editor@electron-api",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

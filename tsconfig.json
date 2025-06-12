@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    // Strictness
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "exactOptionalPropertyTypes": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+
+    // Modules
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+
+    // Emit
+    "lib": ["ES2024"],
+    "target": "ES2024",
+    "useDefineForClassFields": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "importsNotUsedAsValues": "remove",
+
+    // Interop Constraints
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+
+    // Composite
+    "composite": true,
+
+  },
+  "include": [],
+  "files": [],
+  "exclude": ["node_modules", "target", "dist", "lib"],
+  "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+  "references": [
+    { "path": "./renderer" },
+    { "path": "./electron" }
+  ]
+}

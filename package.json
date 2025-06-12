@@ -1,0 +1,17 @@
+{
+  "name": "electron-template",
+  "packageManager": "yarn@4.9.1",
+  "workspaces": [
+    "renderer"
+  ],
+  "scripts": {
+    "dev": "concurrently \"yarn --cwd electron dev\" \"yarn dev:renderer\"",
+    "dev:renderer": "yarn workspace renderer dev",
+    "typecheck": "tsc -b tsconfig.json --verbose"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  }
+}
