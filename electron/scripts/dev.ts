@@ -5,8 +5,9 @@ import { resolve } from 'node:path';
 import type { BuildContext } from 'esbuild';
 import * as esbuild from 'esbuild';
 import kill from 'tree-kill';
+import { debounce } from 'lodash-es';
 
-import { config, electronDir, rootDir } from './common';
+import { config, electronDir } from './common';
 
 // this means we don't spawn electron windows, mainly for testing
 const watchMode = process.argv.includes('--watch');
@@ -21,14 +22,22 @@ const stderrFilterPatterns = [
 
 let spawnProcess: ChildProcessWithoutNullStreams | null = null;
 
-function spawnOrReloadElectron() {
+async function spawnOrReloadElectron() {
   if (watchMode) {
     return;
   }
   if (spawnProcess !== null && spawnProcess.pid) {
+    const { resolve, reject, promise } = Promise.withResolvers<void>();
     spawnProcess.off('exit', process.exit);
-    kill(spawnProcess.pid);
+    kill(spawnProcess.pid, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
     spawnProcess = null;
+    await promise;
   }
 
   const ext = process.platform === 'win32' ? '.cmd' : '';
@@ -71,6 +80,8 @@ function spawnOrReloadElectron() {
   });
 }
 
+const debouncedSpawnOrReloadElectron = debounce(spawnOrReloadElectron, 500);
+
 const common = config();
 
 async function watchLayers() {
@@ -86,7 +97,7 @@ async function watchLayers() {
             build.onEnd(() => {
               if (initialBuild) {
                 console.log(`[layers] has changed, [re]launching electron...`);
-                spawnOrReloadElectron();
+                debouncedSpawnOrReloadElectron();
               } else {
                 buildContextPromise.then(resolve).catch(e => {
                   console.error(e);
@@ -115,7 +126,7 @@ async function main() {
     console.log(`Watching for changes...`);
   } else {
     console.log('Starting electron...');
-    spawnOrReloadElectron();
+    debouncedSpawnOrReloadElectron();
     console.log(`Electron is started, watching for changes...`);
   }
 }

@@ -1,8 +1,8 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import { app } from 'electron';
 
 import { MainWindowManager } from './main-window.service';
 import { logger } from '../logger';
+import { ensureAppReady } from '../utils';
 
 /**
  * This service is responsible for managing the windows of the application.
@@ -12,12 +12,11 @@ import { logger } from '../logger';
 export class WindowsService implements OnModuleInit {
   constructor(private readonly mainWindowService: MainWindowManager) {}
 
-  onModuleInit() {
-    app.on('ready', () => {
-      logger.log('app is ready');
-      this.initializeMainWindow().catch(err => {
-        logger.error('Failed to initialize main window', err);
-      });
+  async onModuleInit() {
+    await ensureAppReady();
+    logger.log('app is ready');
+    this.initializeMainWindow().catch(err => {
+      logger.error('Failed to initialize main window', err);
     });
   }
 

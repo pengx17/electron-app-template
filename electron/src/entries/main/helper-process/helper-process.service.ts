@@ -26,6 +26,7 @@ import {
 import type { HelperToMain, MainToHelper } from '../../../shared/type';
 import { MessageEventChannel } from '../../../shared/utils';
 import { logger } from '../logger';
+import { ensureAppReady } from '../utils';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -62,45 +63,42 @@ export class HelperProcessManager
     return this.utilityProcess!;
   }
 
-  onModuleInit() {
-    app.on('ready', () => {
-      logger.log('Initializing helper process...');
+  async onModuleInit() {
+    await ensureAppReady();
+    logger.log('Initializing helper process...');
 
-      const helperProcess = utilityProcess.fork(HELPER_PROCESS_PATH, [], {
-        execArgv: isDev ? ['--inspect=40895'] : [], // Adjusted port
-        serviceName: 'video-editor-helper-nestjs',
-        stdio: 'pipe', // Capture stdio for logging
+    const helperProcess = utilityProcess.fork(HELPER_PROCESS_PATH, [], {
+      execArgv: isDev ? ['--inspect=40895'] : [], // Adjusted port
+      serviceName: 'video-editor-helper-nestjs',
+      stdio: 'pipe', // Capture stdio for logging
+    });
+    this.utilityProcess = helperProcess;
+
+    if (isDev) {
+      helperProcess.stdout?.on('data', data => {
+        logger.log(`(helper) >`, data.toString().trim());
       });
-      this.utilityProcess = helperProcess;
-
-      if (isDev) {
-        helperProcess.stdout?.on('data', data => {
-          logger.log(`(helper) >`, data.toString().trim());
-        });
-        helperProcess.stderr?.on('data', data => {
-          logger.error(data.toString().trim());
-        });
-      }
-
-      helperProcess.once('spawn', () => {
-        logger.log(
-          `Helper process spawned successfully (PID: ${helperProcess.pid})`
-        );
-        // The RPC and other connections will be set up after spawn,
-        // possibly triggered by other services or parts of the app.
-        this._ready.resolve();
+      helperProcess.stderr?.on('data', data => {
+        logger.error(data.toString().trim());
       });
+    }
 
-      helperProcess.once('exit', code => {
-        logger.warn(`Helper process exited with code: ${code}`);
-        this.utilityProcess = null;
-        // Re-reject the promise if it hasn't resolved yet, or handle re-initialization
-        this._ready.reject(
-          new Error(`Helper process exited with code: ${code}`)
-        );
-        // Reset ready promise for potential restarts
-        this._ready = Promise.withResolvers<void>();
-      });
+    helperProcess.once('spawn', () => {
+      logger.log(
+        `Helper process spawned successfully (PID: ${helperProcess.pid})`
+      );
+      // The RPC and other connections will be set up after spawn,
+      // possibly triggered by other services or parts of the app.
+      this._ready.resolve();
+    });
+
+    helperProcess.once('exit', code => {
+      logger.warn(`Helper process exited with code: ${code}`);
+      this.utilityProcess = null;
+      // Re-reject the promise if it hasn't resolved yet, or handle re-initialization
+      this._ready.reject(new Error(`Helper process exited with code: ${code}`));
+      // Reset ready promise for potential restarts
+      this._ready = Promise.withResolvers<void>();
     });
     app.on('will-quit', () => this.onApplicationShutdown());
   }

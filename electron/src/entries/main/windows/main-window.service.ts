@@ -67,11 +67,6 @@ export class MainWindowManager {
     });
 
     const browserWindow = new BrowserWindow({
-      titleBarStyle: isMacOS()
-        ? 'hiddenInset'
-        : isWindows()
-        ? 'hidden'
-        : 'default',
       x: mainWindowState.x,
       y: mainWindowState.y,
       width: mainWindowState.width,

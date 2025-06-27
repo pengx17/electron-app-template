@@ -5,6 +5,7 @@ import { app, net, protocol } from 'electron';
 
 import { anotherHost, mainHost, resourcesPath } from '../constants';
 import { logger } from '../logger';
+import { ensureAppReady } from '../utils';
 
 export function registerSchemes() {
   protocol.registerSchemesAsPrivileged([
@@ -39,10 +40,9 @@ const webStaticDir = join(resourcesPath, 'web-static');
 
 @Injectable()
 export class ProtocolService implements OnModuleInit {
-  onModuleInit() {
-    app.on('ready', () => {
-      this.setupInterceptors();
-    });
+  async onModuleInit() {
+    await ensureAppReady();
+    this.setupInterceptors();
   }
 
   private readonly handleFileRequest = async (request: Request) => {
